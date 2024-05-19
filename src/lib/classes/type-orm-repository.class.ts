@@ -17,7 +17,7 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
 > {
   constructor(private entityType: any, public entityManager: EntityManager) { }
 
-  withEntityManager(entityManager: EntityManager): TypeOrmRepository<TEntity> {
+  forTransaction(entityManager: EntityManager): TypeOrmRepository<TEntity> {
     return {...this, entityManager};
   }
 
