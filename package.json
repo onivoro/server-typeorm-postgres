@@ -1,6 +1,6 @@
 {
     "name": "@onivoro/server-typeorm-postgres",
-    "version": "0.1.25",
+    "version": "0.1.26",
     "repository": {
         "url": "git+https://github.com/onivoro/server-typeorm-postgres.git"
     },

@@ -17,6 +17,10 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
 > {
   constructor(private entityType: any, public entityManager: EntityManager) { }
 
+  withEntityManager(entityManager: EntityManager): TypeOrmRepository<TEntity> {
+    return {...this, entityManager};
+  }
+
   async getMany(options: FindManyOptions<TEntity>): Promise<TEntity[]> {
     return await (this.repo.find as any)(options);
   }
@@ -50,6 +54,7 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
   async put(options: FindOptionsWhere<TEntity>, body: QueryDeepPartialEntity<TEntity>) {
     // await this.repo.save(options, body); <= this doesn't do what i expected,
     // so just call patch instead
+    // ... buuuuuuuut we should actually change this and adhere more closely to http verb semantics so that PUT is a wholesale replacment of everything but the primary key and PATCH is this current behavior
     await this.patch(options, body);
   }
 
