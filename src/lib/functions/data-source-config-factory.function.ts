@@ -9,17 +9,17 @@ export function dataSourceConfigFactory(
 ): PostgresConnectionOptions {
 
   const {
-    database, host, password, port, username, synchronize=false, logging=false
+    ca, database, host, password, port, username, synchronize = false, logging = false
   } = options;
 
   const config: PostgresConnectionOptions = {
     name,
-    autoLoadEntities: true,
     type: 'postgres',
     host,
-    port,
+    port: port as any,
     username,
     password,
+    ssl: ca ? { ca } : undefined,
     database,
     synchronize,
     logging,
@@ -27,7 +27,7 @@ export function dataSourceConfigFactory(
     subscribers: [],
     migrations: [],
     namingStrategy: new SnakeNamingStrategy(),
-  } as any;
+  };
 
   return config;
 }

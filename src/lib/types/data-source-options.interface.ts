@@ -6,4 +6,5 @@ export interface IDataSourceOptions {
     password: string,
     synchronize?: boolean,
     logging?: boolean,
+    ca?: string,
 }
