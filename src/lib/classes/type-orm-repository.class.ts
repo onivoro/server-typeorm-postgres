@@ -51,6 +51,10 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
     return await (this.repo.delete as any)(options);
   }
 
+  async softDelete(options: FindOptionsWhere<TEntity>): Promise<void> {
+    return await (this.repo.softDelete as any)(options);
+  }
+
   async put(options: FindOptionsWhere<TEntity>, body: QueryDeepPartialEntity<TEntity>) {
     // await this.repo.save(options, body); <= this doesn't do what i expected,
     // so just call patch instead
