@@ -63,7 +63,7 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
     await this.repo.update(options, body);
   }
 
-  protected get repo() {
+  get repo() {
     return this.entityManager.getRepository(this.entityType as any);
   }
 
