@@ -30,19 +30,19 @@
         "module": ""
     },
     "devDependencies": {
-        "@onivoro/cli": "*",
+        "@onivoro/cli": "^22.0.3",
         "@types/jest": "*",
-        "@types/node": "18.19.1",
+        "@types/node": "22.7.9",
         "typescript": "*"
     },
     "engines": {
-        "node": "18.19.1",
-        "npm": "10.2.4"
+        "node": "22.10.0",
+        "npm": "10.9.0"
     },
     "dependencies": {
-        "@nestjs/common": "^10.4.4",
+        "@nestjs/common": "^10.4.6",
         "@nestjs/swagger": "^7.4.2",
-        "@onivoro/isomorphic-common": "^0.4.0",
+        "@onivoro/isomorphic-common": "^22.0.1",
         "typeorm": "^0.3.20",
         "typeorm-naming-strategies": "^4.1.0"
     }
