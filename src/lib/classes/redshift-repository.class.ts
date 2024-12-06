@@ -131,7 +131,7 @@ export class RedshiftRepository<TEntity> extends TypeOrmRepository<TEntity> {
   private mapPlaceholderExpression(length: number, index: number, column: string) {
     const exp = `$${length + index + 1}`;
     const meta: TTableMeta = this.columns[column];
-    return meta.type === 'jsonb' ? `JSON_PARSE('${exp}')` : exp;
+    return meta.type === 'jsonb' ? `JSON_PARSE(${exp})` : exp;
   }
 
   async postOneWithoutReturn(entity: Partial<TEntity>): Promise<void> {
