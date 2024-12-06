@@ -135,7 +135,7 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
     const values = Object.values(entity);
 
     const columnNames = keys.map(key => this.columns[key].databasePath).join(', ');
-    const paramPlaceholders = keys.map((_, index) => `$${index + 1}`).join(', ');
+    const paramPlaceholders = keys.map((key, index) => this.mapPlaceholderExpression(0, index, key)).join(', ');
 
     const insertQuery = `INSERT INTO "${this.table}" (${columnNames}) VALUES (${paramPlaceholders})`;
 
@@ -164,7 +164,7 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
         values.push((typeof entity[key] === 'undefined') ? this.columns[key].default : entity[key]);
       });
 
-      const paramPlaceholders = Object.keys(keyMap).map((_, index) => `$${length + index + 1}`).join(', ');
+      const paramPlaceholders = Object.keys(keyMap).map((_, index) => this.mapPlaceholderExpression(length, index, _)).join(', ');
 
       valuesExpressions.push(`(${paramPlaceholders})`);
     });
@@ -172,6 +172,12 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
     const insertQuery = `INSERT INTO "${this.table}" (${columnNames}) VALUES ${valuesExpressions.join(', ')}`;
 
     return { insertQuery, values };
+  }
+
+  protected mapPlaceholderExpression(length: number, index: number, column: string) {
+    const exp = `$${length + index + 1}`;
+    const meta: TTableMeta = this.columns[column];
+    return meta.type === 'jsonb' ? exp : exp; // TODO: figure out how to handle this for postgres... $1::jsonb equivalent
   }
 
   protected buildSelectManyQuery(entities: Partial<TEntity>[]): { selectQuery: string, values: any[] } {

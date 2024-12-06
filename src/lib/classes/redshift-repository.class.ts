@@ -96,44 +96,6 @@ export class RedshiftRepository<TEntity> extends TypeOrmRepository<TEntity> {
     await this.patch(where, { deletedAt: new Date().toISOString() } as any);
   }
 
-  protected override buildInsertManyQuery(entities: Partial<TEntity>[]): { insertQuery: string, values: any[] } {
-    const keyMap: any = {};
-
-    entities.forEach(entity => {
-      Object.keys(entity)
-        .forEach(key => {
-          keyMap[key] = true;
-        });
-    });
-
-    const columnNames = Object.keys(keyMap).map(key => this.columns[key].databasePath).join(', ');
-
-    const valuesExpressions: string[] = [];
-    const values: any[] = [];
-
-    entities.forEach(entity => {
-      const length = values.length;
-
-      Object.keys(keyMap).forEach(key => {
-        values.push((typeof entity[key] === 'undefined') ? this.columns[key].default : entity[key]);
-      });
-
-      const paramPlaceholders = Object.keys(keyMap).map((_, index) => this.mapPlaceholderExpression(length, index, _)).join(', ');
-
-      valuesExpressions.push(`(${paramPlaceholders})`);
-    });
-
-    const insertQuery = `INSERT INTO "${this.table}" (${columnNames}) VALUES ${valuesExpressions.join(', ')}`;
-
-    return { insertQuery, values };
-  }
-
-  private mapPlaceholderExpression(length: number, index: number, column: string) {
-    const exp = `$${length + index + 1}`;
-    const meta: TTableMeta = this.columns[column];
-    return meta.type === 'jsonb' ? `JSON_PARSE(${exp})` : exp;
-  }
-
   async postOneWithoutReturn(entity: Partial<TEntity>): Promise<void> {
     // PERFORM AN INSERT BUT NOT THE RETRIEVAL QUERY FOR PERFORMANCE
     const { insertQuery, values } = this.buildInsertQuery(entity);
@@ -149,5 +111,11 @@ export class RedshiftRepository<TEntity> extends TypeOrmRepository<TEntity> {
 
   private throwNotImplemented(feature: string) {
     throw new NotImplementedException(`RedshiftRepository of type "${this.entityType?.name}" has no implementation for "${feature}"`);
+  }
+
+  protected override mapPlaceholderExpression(length: number, index: number, column: string) {
+    const exp = `$${length + index + 1}`;
+    const meta: TTableMeta = this.columns[column];
+    return meta.type === 'jsonb' ? `JSON_PARSE(${exp})` : exp;
   }
 }
