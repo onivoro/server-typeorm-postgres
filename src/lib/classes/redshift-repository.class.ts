@@ -2,6 +2,7 @@ import { Injectable, NotImplementedException } from '@nestjs/common';
 import { EntityManager, FindManyOptions, FindOneOptions, FindOptionsWhere } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { TypeOrmRepository } from './type-orm-repository.class';
+import { TTableMeta } from '../types/table-meta.type';
 
 @Injectable()
 export class RedshiftRepository<TEntity> extends TypeOrmRepository<TEntity> {
@@ -39,9 +40,9 @@ export class RedshiftRepository<TEntity> extends TypeOrmRepository<TEntity> {
     Object.entries(where).forEach(([propertyPath, value], index) => {
       const key = this.columns[propertyPath].databasePath;
       if (index === 0) {
-        whereClause += ` WHERE ${key} = $${index + 1}`;
+        whereClause += ` WHERE ${key} = ${this.mapPlaceholderExpression(0, index, propertyPath)}`;
       } else {
-        whereClause += ` AND ${key} = $${index + 1}`;
+        whereClause += ` AND ${key} = ${this.mapPlaceholderExpression(0, index, propertyPath)}`;
       }
       queryParams.push(value);
     });
@@ -52,7 +53,7 @@ export class RedshiftRepository<TEntity> extends TypeOrmRepository<TEntity> {
     const length = queryParams?.length;
 
     Object.entries(body).forEach(([key, value], index) => {
-      setExpressions.push(`${this.columns[key].databasePath} = $${length + index + 1}`);
+      setExpressions.push(`${this.columns[key].databasePath} = ${this.mapPlaceholderExpression(length, index, key)}`);
       setParams.push(value);
     });
 
@@ -93,6 +94,44 @@ export class RedshiftRepository<TEntity> extends TypeOrmRepository<TEntity> {
 
   override async softDelete(where: FindOptionsWhere<TEntity>): Promise<void> {
     await this.patch(where, { deletedAt: new Date().toISOString() } as any);
+  }
+
+  protected override buildInsertManyQuery(entities: Partial<TEntity>[]): { insertQuery: string, values: any[] } {
+    const keyMap: any = {};
+
+    entities.forEach(entity => {
+      Object.keys(entity)
+        .forEach(key => {
+          keyMap[key] = true;
+        });
+    });
+
+    const columnNames = Object.keys(keyMap).map(key => this.columns[key].databasePath).join(', ');
+
+    const valuesExpressions: string[] = [];
+    const values: any[] = [];
+
+    entities.forEach(entity => {
+      const length = values.length;
+
+      Object.keys(keyMap).forEach(key => {
+        values.push((typeof entity[key] === 'undefined') ? this.columns[key].default : entity[key]);
+      });
+
+      const paramPlaceholders = Object.keys(keyMap).map((_, index) => this.mapPlaceholderExpression(length, index, _)).join(', ');
+
+      valuesExpressions.push(`(${paramPlaceholders})`);
+    });
+
+    const insertQuery = `INSERT INTO "${this.table}" (${columnNames}) VALUES ${valuesExpressions.join(', ')}`;
+
+    return { insertQuery, values };
+  }
+
+  private mapPlaceholderExpression(length: number, index: number, column: string) {
+    const exp = `$${length + index + 1}`;
+    const meta: TTableMeta = this.columns[column];
+    return meta.type === 'jsonb' ? `JSON_PARSE('${exp}')` : exp;
   }
 
   async postOneWithoutReturn(entity: Partial<TEntity>): Promise<void> {
