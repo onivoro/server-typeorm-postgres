@@ -57,7 +57,7 @@ export class RedshiftRepository<TEntity> extends TypeOrmRepository<TEntity> {
       setParams.push(value);
     });
 
-    let query = `UPDATE "${this.table}" SET ${setExpressions.join(', ')} ${whereClause}`;
+    let query = `UPDATE ${this.getTableNameExpression()} SET ${setExpressions.join(', ')} ${whereClause}`;
 
     await this.query(query, [...queryParams, ...setParams]);
   }

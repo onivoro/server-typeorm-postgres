@@ -19,13 +19,15 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
 > {
   protected columns: TKeysOf<TEntity, TTableMeta> = {} as any;
   protected table: string;
+  protected schema: string;
   debug = false;
 
   constructor(public entityType: any, public entityManager: EntityManager) {
 
-    const { tableName } = this.repo.metadata;
+    const { tableName, schema } = this.repo.metadata;
 
     this.table = tableName;
+    this.schema = schema;
 
     this.repo.metadata.columns.forEach((_) => {
       const { databasePath, propertyPath, type, isPrimary } = _;
@@ -101,15 +103,24 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
     return insertedEntity;
   }
 
+  protected getSchemaPrefix() {
+    return this.schema ? `"${this.schema}".` : '';
+  }
+
+  protected getTableNameExpression() {
+    const schemaPrefix = this.getSchemaPrefix();
+    return `${schemaPrefix}"${this.table}"`;
+  }
+
   protected buildSelectStatement(options: FindManyOptions<TEntity>): { query: string; queryParams: any[]; } {
     const { whereClause, queryParams } = this.buildWhereExpression(options.where as FindOptionsWhere<TEntity>);
-    const query = `SELECT * FROM "${this.table}"${whereClause};`;
+    const query = `SELECT * FROM ${this.getTableNameExpression()}${whereClause};`;
     return { query, queryParams };
   }
 
   protected buildDeleteStatement(where: FindManyOptions<TEntity>): { query: string; queryParams: any[]; } {
     const { whereClause, queryParams } = this.buildWhereExpression(where as FindOptionsWhere<TEntity>);
-    const query = `DELETE FROM "${this.table}"${whereClause};`;
+    const query = `DELETE FROM ${this.getTableNameExpression()}${whereClause};`;
     return { query, queryParams };
   }
 
@@ -137,7 +148,7 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
     const columnNames = keys.map(key => this.columns[key].databasePath).join(', ');
     const paramPlaceholders = keys.map((key, index) => this.mapPlaceholderExpression(0, index, key)).join(', ');
 
-    const insertQuery = `INSERT INTO "${this.table}" (${columnNames}) VALUES (${paramPlaceholders})`;
+    const insertQuery = `INSERT INTO ${this.getTableNameExpression()} (${columnNames}) VALUES (${paramPlaceholders})`;
 
     return { insertQuery, values };
   }
@@ -169,7 +180,7 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
       valuesExpressions.push(`(${paramPlaceholders})`);
     });
 
-    const insertQuery = `INSERT INTO "${this.table}" (${columnNames}) VALUES ${valuesExpressions.join(', ')}`;
+    const insertQuery = `INSERT INTO ${this.getTableNameExpression()} (${columnNames}) VALUES ${valuesExpressions.join(', ')}`;
 
     return { insertQuery, values };
   }
@@ -202,7 +213,7 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
 
       const whereExpression = Object.keys(keyMap).map((_, index) => `(${this.columns[_].databasePath} = $${length + index + 1})`).join(' AND ');
 
-      selectExpressions.push(`(select * from "${this.table}" where (${whereExpression}))`);
+      selectExpressions.push(`(select * from ${this.getTableNameExpression()} where (${whereExpression}))`);
     });
 
     const selectQuery = selectExpressions.join(' UNION ');
@@ -222,13 +233,13 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
 
   async query(query: string, parameters: any[]) {
     if (this.debug) {
-      console.log({ table: this.table, query, parameters });
+      console.log({ schema: this.schema, table: this.table, query, parameters });
     }
 
     const result = await this.repo.query(query, parameters);
 
     if (this.debug) {
-      console.log({ table: this.table, query, parameters, result });
+      console.log({ schema: this.schema, table: this.table, query, parameters, result });
     }
 
     return result as any[];
