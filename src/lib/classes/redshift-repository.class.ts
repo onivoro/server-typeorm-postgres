@@ -69,13 +69,17 @@ export class RedshiftRepository<TEntity> extends TypeOrmRepository<TEntity> {
   }
 
   override async postMany(entities: Partial<TEntity>[]): Promise<TEntity[]> {
-    const { insertQuery, values } = this.buildInsertManyQuery(entities);
+    if (entities?.length) {
+      const { insertQuery, values } = this.buildInsertManyQuery(entities);
 
-    await this.query(insertQuery, values);
+      await this.query(insertQuery, values);
 
-    const { selectQuery, values: selectValues } = this.buildSelectManyQuery(entities);
+      const { selectQuery, values: selectValues } = this.buildSelectManyQuery(entities);
 
-    return await this.queryAndMap(selectQuery, selectValues);
+      return await this.queryAndMap(selectQuery, selectValues);
+    }
+
+    return [];
   }
 
   override async put(options: FindOptionsWhere<TEntity>, body: QueryDeepPartialEntity<TEntity>): Promise<void> {
