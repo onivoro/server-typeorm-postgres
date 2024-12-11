@@ -132,7 +132,7 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
       const key = this.columns[propertyPath].databasePath;
 
       const where = Array.isArray((value as any).value)
-        ? `${key} in $${index + 1}`
+        ? `${key} in ANY($${index + 1})`
         : `${key} = $${index + 1}`;
 
       if (index === 0) {

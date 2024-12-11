@@ -14,7 +14,7 @@ export class RedshiftRepository<TEntity> extends TypeOrmRepository<TEntity> {
   override async getMany(options: FindManyOptions<TEntity>): Promise<TEntity[]> {
     const { query, queryParams } = this.buildSelectStatement(options);
 
-    return await this.queryAndMap(query, queryParams);
+    return await this.queryAndMap(query, queryParams.map(_ => (_ as any).value ? (_ as any).value : _));
   }
 
   override async getOne(options: FindOneOptions<TEntity>): Promise<TEntity> {
