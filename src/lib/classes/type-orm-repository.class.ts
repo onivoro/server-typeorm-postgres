@@ -130,10 +130,15 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
 
     Object.entries(where || {}).forEach(([propertyPath, value], index) => {
       const key = this.columns[propertyPath].databasePath;
+
+      const where = Array.isArray((value as any).value)
+        ? `${key} in $${index + 1}`
+        : `${key} = $${index + 1}`;
+
       if (index === 0) {
-        whereClause += ` WHERE ${key} = $${index + 1}`;
+        whereClause += ` WHERE ${where}`;
       } else {
-        whereClause += ` AND ${key} = $${index + 1}`;
+        whereClause += ` AND ${where}`;
       }
       queryParams.push(value);
     });
