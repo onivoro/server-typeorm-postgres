@@ -1,4 +1,5 @@
 import {
+  DataSource,
   EntityManager,
   FindManyOptions,
   FindOneOptions,
@@ -17,9 +18,9 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
   FindOptionsWhere<TEntity>,
   QueryDeepPartialEntity<TEntity>
 > {
-  protected columns: TKeysOf<TEntity, TTableMeta> = {} as any;
-  protected table: string;
-  protected schema: string;
+  columns: TKeysOf<TEntity, TTableMeta> = {} as any;
+  table: string;
+  schema: string;
   debug = false;
 
   constructor(public entityType: any, public entityManager: EntityManager) {
@@ -254,5 +255,25 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
     const result = await this.query(query, parameters);
 
     return result?.map((_: any) => this.map(_)) as TEntity[];
+  }
+
+  static async buildFromMetadata<TGenericEntity>(dataSource: DataSource, _: {schema: string, table: string, columns: TKeysOf<TGenericEntity, TTableMeta>}) {
+
+    class GenericRepository extends TypeOrmRepository<TGenericEntity> {
+      constructor() {
+        const entityManager = dataSource.createEntityManager();
+        super(Object, {
+          ...entityManager,
+          getRepository: () => entityManager as any
+        } as any);
+      }
+    }
+
+    const genericRepository = new GenericRepository();
+    (genericRepository as any).schema = _.schema;
+    (genericRepository as any).table = _.table;
+    (genericRepository as any).columns = _.columns;
+
+    return genericRepository as TypeOrmRepository<TGenericEntity>;
   }
 }
