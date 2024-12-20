@@ -3,8 +3,6 @@ import {
   FindManyOptions,
   FindOneOptions,
   FindOptionsWhere,
-  ObjectLiteral,
-  Repository,
 } from 'typeorm';
 
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
@@ -19,26 +17,22 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
   FindOptionsWhere<TEntity>,
   QueryDeepPartialEntity<TEntity>
 > {
-  columns: TKeysOf<TEntity, TTableMeta> = {} as any;
-  table: string;
-  schema: string;
+  protected columns: TKeysOf<TEntity, TTableMeta> = {} as any;
+  protected table: string;
+  protected schema: string;
   debug = false;
 
   constructor(public entityType: any, public entityManager: EntityManager) {
-    this.table = '';
-    this.schema = '';
 
-    if (this.repo?.metadata?.columns?.length) {
-      const { tableName, schema } = this.repo.metadata;
+    const { tableName, schema } = this.repo.metadata;
 
-      this.table = tableName;
-      this.schema = schema;
+    this.table = tableName;
+    this.schema = schema;
 
-      this.repo.metadata.columns.forEach((_) => {
-        const { databasePath, propertyPath, type, isPrimary } = _;
-        this.columns[propertyPath] = { databasePath, type, propertyPath, isPrimary, default: _.default };
-      });
-    }
+    this.repo.metadata.columns.forEach((_) => {
+      const { databasePath, propertyPath, type, isPrimary } = _;
+      this.columns[propertyPath] = { databasePath, type, propertyPath, isPrimary, default: _.default };
+    })
   }
 
   forTransaction(entityManager: EntityManager): TypeOrmRepository<TEntity> {
@@ -88,12 +82,7 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
   }
 
   get repo() {
-    try {
-      return this.entityManager.getRepository(this.entityType as any);
-    } catch (error) {
-      console.error(`EntityManager.getRepository failed. Falling back to EntityManager for basic functionality.`);
-      return (this.entityManager as any) as Repository<ObjectLiteral>;
-    }
+    return this.entityManager.getRepository(this.entityType as any);
   }
 
   protected async insertAndReturn(entityToInsert: TEntity): Promise<TEntity> {
