@@ -257,7 +257,7 @@ export class TypeOrmRepository<TEntity> implements IEntityProvider<
     return result?.map((_: any) => this.map(_)) as TEntity[];
   }
 
-  static async buildFromMetadata<TGenericEntity>(dataSource: DataSource, _: {schema: string, table: string, columns: TKeysOf<TGenericEntity, TTableMeta>}) {
+  static buildFromMetadata<TGenericEntity>(dataSource: DataSource, _: {schema: string, table: string, columns: TKeysOf<TGenericEntity, TTableMeta>}) {
 
     class GenericRepository extends TypeOrmRepository<TGenericEntity> {
       constructor() {
